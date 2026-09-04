@@ -1,8 +1,14 @@
 const express = require("express");
+const path = require("path");
 const crypto = require("crypto");
 const app = express();
 app.use(express.json());
-app.use(express.static("public"));
+app.use(express.static(path.join(__dirname, "public")));
+
+// Home route: explicitly serve the main NISHAD BRAND page
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
+});
 
 const PORT = process.env.PORT || 3000;
 const PRICE = 350;
