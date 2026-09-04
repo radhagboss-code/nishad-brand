@@ -6,17 +6,6 @@
 <main class="card admin">
 <h1>Payment Requests</h1>
 <p class="note">Bank/UPI app me payment verify karne ke baad hi Approve karein.</p>
-<section class="order">
-  <h2>💰 ID Price</h2>
-  <p class="note">Current rate: <b id="currentPrice">Loading…</b> per ID</p>
-  <div class="actions" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-    <input id="priceInput" type="number" min="1" max="100000" step="1" placeholder="Price per ID" style="max-width:180px">
-    <button onclick="setPrice(300)">₹300</button>
-    <button onclick="setPrice(350)">₹350</button>
-    <button onclick="setPrice(400)">₹400</button>
-    <button onclick="savePrice()">Save Rate</button>
-  </div>
-</section>
 <p><a href="/inventory.html">→ ID Inventory / Username-Password Add karein</a></p>
 <div id="orders">Loading…</div>
 </main>
@@ -38,22 +27,6 @@ async function api(url,opts={}){
  if(!r.ok)throw new Error(d.error||"Request failed");
  return d;
 }
-async function loadPrice(){
- try{
-  const d=await api("/api/admin/price");
-  document.getElementById("currentPrice").textContent="₹"+d.price;
-  document.getElementById("priceInput").value=d.price;
- }catch(e){ document.getElementById("currentPrice").textContent=e.message; }
-}
-function setPrice(v){ document.getElementById("priceInput").value=v; }
-async function savePrice(){
- const price=Number(document.getElementById("priceInput").value);
- if(!Number.isInteger(price)||price<1||price>100000){alert("Valid price enter karein");return;}
- try{
-  const d=await api("/api/admin/price",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({price})});
-  alert(d.message||"Rate updated"); loadPrice();
- }catch(e){alert(e.message);}
-}
 async function load(){
  try{
   const d=await api("/api/admin/orders");
@@ -64,7 +37,6 @@ async function act(orderId,action){
  try{const d=await api("/api/admin/"+action,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({orderId})});alert(d.message||"Done");load();}
  catch(e){alert(e.message);load();}
 }
-loadPrice();
 load();
 </script>
 </body></html>
