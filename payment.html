@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NISHAD BRAND — Payment</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<header class="top"><div class="brandIcon">▣</div><div><div class="brand">NISHAD BRAND</div><div class="sub">PAYMENT</div></div></header>
+
+<main class="card payment">
+  <h1>Complete Payment</h1>
+  <div id="summary">Loading order…</div>
+  <img class="qr" src="/qr.jpg" alt="UPI QR">
+  <p class="upi">QR scan karke exact amount pay karein.</p>
+
+  <label class="fieldLabel">Payment ke baad UTR / Transaction ID</label>
+  <input id="utr" class="input" type="text" maxlength="64" placeholder="Example: 123456789012" autocomplete="off">
+
+  <button class="buy" id="submit">Submit Payment Details</button>
+  <div class="status" id="status">Payment admin verification ke liye pending rahega.</div>
+
+  <p class="note">Important: UTR submit karna payment ka proof nahi hai. Admin payment ko bank/UPI app me verify karke hi ID approve karega.</p>
+</main>
+
+<script>
+const orderId=new URLSearchParams(location.search).get("order");
+const summary=document.getElementById("summary");
+const status=document.getElementById("status");
+async function load(){
+  if(!orderId){status.textContent="Invalid order.";return;}
+  const r=await fetch("/api/order/"+encodeURIComponent(orderId));
+  const d=await r.json();
+  if(!r.ok){status.textContent=d.error||"Order not found";return;}
+  summary.innerHTML=`<b>Order:</b> ${d.orderId}<br><b>Quantity:</b> ${d.quantity} ID(s)<br><b>Amount:</b> ₹${d.amount}`;
+  if(d.status==="PAID"){
+    status.className="status ok";
+    status.innerHTML="<b>Payment verified.</b><br><br>"+d.credentials.map(x=>`Username: <b>${x.username}</b><br>Password: <b>${x.password}</b>`).join("<hr>");
+    document.getElementById("submit").disabled=true;
+  } else if(d.status==="UNDER_REVIEW"){
+    status.textContent="UTR received. Admin payment verify kar raha hai.";
+  } else if(d.status==="REJECTED"){
+    status.className="status bad";
+    status.textContent="Payment details rejected. Please contact admin.";
+  }
+}
+document.getElementById("submit").onclick=async()=>{
+  const utr=document.getElementById("utr").value.trim();
+  if(!utr){alert("UTR / Transaction ID enter karein.");return;}
+  const b=document.getElementById("submit"); b.disabled=true; b.textContent="Submitting…";
+  try{
+    const r=await fetch("/api/submit-utr",{
+      method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({orderId,utr})
+    });
+    const d=await r.json();
+    if(!r.ok) throw new Error(d.error||"Unable to submit");
+    status.textContent="UTR received. Admin payment verify kar raha hai.";
+    b.textContent="Submitted ✓";
+  }catch(e){alert(e.message);b.disabled=false;b.textContent="Submit Payment Details";}
+};
+load();
+</script>
+</body>
+</html>

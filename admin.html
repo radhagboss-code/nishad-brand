@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NISHAD BRAND — Admin</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<header class="top"><div class="brandIcon">▣</div><div><div class="brand">NISHAD BRAND</div><div class="sub">ADMIN PANEL</div></div></header>
+<main class="card admin">
+  <h1>Payment Requests</h1>
+  <p class="note">Bank/UPI app me payment verify karne ke baad hi Approve karein.</p>
+  <div id="orders">Loading…</div>
+</main>
+<script>
+async function load(){
+ const r=await fetch("/api/admin/orders");
+ const d=await r.json();
+ document.getElementById("orders").innerHTML=d.orders.length?d.orders.map(o=>`
+ <div class="order">
+   <b>${o.orderId}</b><br>
+   Amount: ₹${o.amount} · Qty: ${o.quantity}<br>
+   UTR: <code>${o.utr||"—"}</code><br>
+   Status: <b>${o.status}</b>
+   ${o.status==="UNDER_REVIEW"?`
+   <div class="actions">
+    <button onclick="act('${o.orderId}','approve')">✓ Approve</button>
+    <button onclick="act('${o.orderId}','reject')">✕ Reject</button>
+   </div>`:""}
+ </div>`).join(""):"No payment requests yet.";
+}
+async function act(orderId,action){
+ const secret=prompt("Admin secret enter karein:");
+ if(!secret)return;
+ const r=await fetch("/api/admin/"+action,{method:"POST",headers:{"Content-Type":"application/json","x-admin-secret":secret},body:JSON.stringify({orderId})});
+ const d=await r.json();
+ alert(d.message||d.error||"Done");
+ load();
+}
+load();
+</script>
+</body>
+</html>

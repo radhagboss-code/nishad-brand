@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NISHAD BRAND — Premium ID Store</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<header class="top">
+  <div class="brandIcon">▣</div>
+  <div><div class="brand">NISHAD BRAND</div><div class="sub">PREMIUM STORE</div></div>
+  <button class="menu" aria-label="Menu">☰</button>
+</header>
+
+<main class="card">
+  <div class="stock">⚡ Limited Stock!</div>
+  <h1>ID Available: <span id="stock">39</span></h1>
+  <div class="guarantee">🔥 PREMIUM ID GUARANTEE 24 HOURS TAK 🔥</div>
+
+  <h2>🛒 Select Number of IDs:</h2>
+  <div class="plans" id="plans"></div>
+
+  <button class="buy" id="buyBtn">⚡ Buy Now — ₹350 (1 @ ₹350) →</button>
+  <p class="note">Payment is verified on the server. An ID is released only after verified payment.</p>
+</main>
+
+<a class="wa" href="https://wa.me/" target="_blank" rel="noopener">◔</a>
+
+<script>
+const price = 350;
+const choices = [1,2,5,10,20,30];
+let qty = 1;
+const plans = document.getElementById("plans");
+
+function render(){
+  plans.innerHTML = choices.map(n => `
+    <button class="plan ${n===qty?'selected':''}" data-q="${n}">
+      <strong>${n} ID${n>1?'s':''}</strong><span>₹${n*price}</span>
+    </button>`).join("") + `
+    <button class="plan custom" id="custom"><strong>Custom</strong><span>Enter Qty</span></button>`;
+  document.querySelectorAll(".plan[data-q]").forEach(b => b.onclick=()=>{
+    qty=Number(b.dataset.q); render(); updateBuy();
+  });
+  document.getElementById("custom").onclick=()=>{
+    const n=Number(prompt("Enter quantity of IDs:"));
+    if(Number.isInteger(n) && n>0 && n<=100){qty=n; render(); updateBuy();}
+  };
+}
+function updateBuy(){
+  document.getElementById("buyBtn").textContent =
+    `⚡ Buy Now — ₹${qty*price} (${qty} @ ₹${price}) →`;
+}
+document.getElementById("buyBtn").onclick=async()=>{
+  const btn=document.getElementById("buyBtn");
+  btn.disabled=true; btn.textContent="Creating order…";
+  try{
+    const r=await fetch("/api/create-order",{
+      method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({quantity:qty})
+    });
+    const d=await r.json();
+    if(!r.ok) throw new Error(d.error||"Unable to create order");
+    location.href="/payment.html?order="+encodeURIComponent(d.orderId);
+  }catch(e){ alert(e.message); btn.disabled=false; updateBuy(); }
+};
+render(); updateBuy();
+</script>
+</body>
+</html>
