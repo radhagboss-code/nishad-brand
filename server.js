@@ -12,7 +12,7 @@ app.get("/", (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-const PRICE = 1;
+const PRICE = 350;
 
 if (!process.env.DATABASE_URL) {
   console.error("DATABASE_URL is required. Create/connect a PostgreSQL database in Render and add its connection string to this service.");
