@@ -1,7 +1,12 @@
 {
-  "name":"nishad-brand-id-store",
-  "version":"1.0.0",
-  "private":true,
-  "scripts":{"start":"node server.js"},
-  "dependencies":{"express":"^4.21.2"}
+  "name": "nishad-brand-id-store",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "pg": "^8.16.3"
+  }
 }

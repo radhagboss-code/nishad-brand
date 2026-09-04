@@ -1,44 +1,42 @@
 <!doctype html>
 <html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>NISHAD BRAND — Admin</title>
-<link rel="stylesheet" href="/style.css">
-</head>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>NISHAD BRAND — Admin</title><link rel="stylesheet" href="/style.css"></head>
 <body>
 <header class="top"><div class="brandIcon">▣</div><div><div class="brand">NISHAD BRAND</div><div class="sub">ADMIN PANEL</div></div></header>
 <main class="card admin">
-  <h1>Payment Requests</h1>
-  <p class="note">Bank/UPI app me payment verify karne ke baad hi Approve karein.</p>
-  <div id="orders">Loading…</div>
+<h1>Payment Requests</h1>
+<p class="note">Bank/UPI app me payment verify karne ke baad hi Approve karein.</p>
+<p><a href="/inventory.html">→ ID Inventory / Username-Password Add karein</a></p>
+<div id="orders">Loading…</div>
 </main>
 <script>
+let secret=localStorage.getItem("adminSecret");
+async function getSecret(){
+ if(secret)return secret;
+ secret=prompt("Admin secret enter karein:");
+ if(secret)localStorage.setItem("adminSecret",secret);
+ return secret;
+}
+async function api(url,opts={}){
+ const s=await getSecret();
+ if(!s)throw new Error("Admin secret required");
+ opts.headers=Object.assign({"x-admin-secret":s},opts.headers||{});
+ const r=await fetch(url,opts);
+ const d=await r.json().catch(()=>({}));
+ if(r.status===401){localStorage.removeItem("adminSecret");secret=null;throw new Error("Wrong admin secret");}
+ if(!r.ok)throw new Error(d.error||"Request failed");
+ return d;
+}
 async function load(){
- const r=await fetch("/api/admin/orders");
- const d=await r.json();
- document.getElementById("orders").innerHTML=d.orders.length?d.orders.map(o=>`
- <div class="order">
-   <b>${o.orderId}</b><br>
-   Amount: ₹${o.amount} · Qty: ${o.quantity}<br>
-   UTR: <code>${o.utr||"—"}</code><br>
-   Status: <b>${o.status}</b>
-   ${o.status==="UNDER_REVIEW"?`
-   <div class="actions">
-    <button onclick="act('${o.orderId}','approve')">✓ Approve</button>
-    <button onclick="act('${o.orderId}','reject')">✕ Reject</button>
-   </div>`:""}
- </div>`).join(""):"No payment requests yet.";
+ try{
+  const d=await api("/api/admin/orders");
+  document.getElementById("orders").innerHTML=d.orders.length?d.orders.map(o=>`<div class="order"><b>${o.orderId}</b><br>Amount: ₹${o.amount} · Qty: ${o.quantity}<br>UTR: <code>${o.utr||"—"}</code><br>Status: <b>${o.status}</b>${o.status==="UNDER_REVIEW"?`<div class="actions"><button onclick="act('${o.orderId}', 'approve')">✓ Approve</button><button onclick="act('${o.orderId}', 'reject')">✕ Reject</button></div>`:""}</div>`).join(""):"No payment requests yet.";
+ }catch(e){document.getElementById("orders").innerHTML=`<div class="status bad">${e.message}</div><button class="buy" onclick="load()">Try Again</button>`;}
 }
 async function act(orderId,action){
- const secret=prompt("Admin secret enter karein:");
- if(!secret)return;
- const r=await fetch("/api/admin/"+action,{method:"POST",headers:{"Content-Type":"application/json","x-admin-secret":secret},body:JSON.stringify({orderId})});
- const d=await r.json();
- alert(d.message||d.error||"Done");
- load();
+ try{const d=await api("/api/admin/"+action,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({orderId})});alert(d.message||"Done");load();}
+ catch(e){alert(e.message);load();}
 }
 load();
 </script>
-</body>
-</html>
+</body></html>

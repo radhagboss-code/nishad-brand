@@ -15,7 +15,7 @@
 
 <main class="card">
   <div class="stock">⚡ Limited Stock!</div>
-  <h1>ID Available: <span id="stock">39</span></h1>
+  <h1>ID Available: <span id="stock">0</span></h1>
   <div class="guarantee">🔥 PREMIUM ID GUARANTEE 24 HOURS TAK 🔥</div>
 
   <h2>🛒 Select Number of IDs:</h2>
@@ -64,7 +64,8 @@ document.getElementById("buyBtn").onclick=async()=>{
     location.href="/payment.html?order="+encodeURIComponent(d.orderId);
   }catch(e){ alert(e.message); btn.disabled=false; updateBuy(); }
 };
-render(); updateBuy();
+async function loadStock(){ try{ const r=await fetch("/api/stock"); const d=await r.json(); document.getElementById("stock").textContent=d.available; }catch(e){} }
+render(); updateBuy(); loadStock(); setInterval(loadStock,10000);
 </script>
 </body>
 </html>

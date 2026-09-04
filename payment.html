@@ -61,6 +61,7 @@ document.getElementById("submit").onclick=async()=>{
   }catch(e){alert(e.message);b.disabled=false;b.textContent="Submit Payment Details";}
 };
 load();
+setInterval(()=>{ if(orderId) load(); },5000);
 </script>
 </body>
 </html>

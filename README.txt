@@ -1,26 +1,30 @@
-# NISHAD BRAND — Static QR + Manual Verification + ID Inventory
+NISHAD BRAND — PostgreSQL-ready
 
-Features:
-- ₹350 per ID
-- Customer selects quantity
-- Static QR payment
-- Customer submits UTR
-- Admin manually verifies payment
-- Admin approves/rejects
-- Admin can manually add Username + Password IDs
-- On approval, requested number of AVAILABLE IDs are atomically assigned and marked SOLD
-- Stock count can be used to show available IDs / out of stock
-- Admin inventory page: `/inventory.html`
-- Admin payment requests: `/admin.html`
+WHAT CHANGED
+- Orders and ID inventory are stored in PostgreSQL instead of server memory.
+- IDs remain available after Render restarts/redeploys when PostgreSQL is connected.
+- Payment approval assigns IDs inside a database transaction so the same ID is not assigned twice.
+- Passwords are encrypted before being stored in PostgreSQL using AES-256-GCM.
+- QR image is included at public/qr.jpg.
 
-Setup:
-1. Install Node.js.
-2. `npm install`
-3. Set `ADMIN_SECRET` to a strong secret.
-4. `npm start`
-5. Customer: `/`
-6. Admin payments: `/admin.html`
-7. Admin inventory: `/inventory.html`
+RENDER SETUP (REQUIRED)
+1. In Render Dashboard click + New > Postgres and create a database.
+2. Use the same region as the NISHAD BRAND web service.
+3. Open the database and use Connect > Internal Database URL.
+4. Open the NISHAD BRAND web service > Environment.
+5. Add these environment variables:
+   DATABASE_URL = <Render Postgres Internal Database URL>
+   ADMIN_SECRET = <a strong secret of your choice>
+   CREDENTIAL_ENCRYPTION_KEY = <a long random secret; keep it safe>
+6. Save and deploy the web service.
+7. After deploy, open:
+   https://YOUR-SERVICE.onrender.com/api/health/db
+   It should show database connected.
+8. Open /inventory.html and add Username + Password records.
+9. Test a purchase and approve the UTR from /admin.html.
 
-IMPORTANT:
-This demo stores orders/inventory in memory, so data is lost on server restart. Before public use, use a real database, HTTPS, proper admin login, rate limiting, backups and audit logs.
+IMPORTANT
+- Never put DATABASE_URL, ADMIN_SECRET, or CREDENTIAL_ENCRYPTION_KEY into GitHub files.
+- Keep CREDENTIAL_ENCRYPTION_KEY permanently. If it is changed later, old encrypted passwords cannot be decrypted.
+- Render Free Postgres is suitable for testing but currently expires after 30 days. Upgrade the database for long-term production storage.
+- The existing in-memory data from older deployments cannot be automatically recovered; add your IDs again to the new database.
