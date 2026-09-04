@@ -5,13 +5,14 @@ const { Pool } = require("pg");
 
 const app = express();
 app.use(express.json());
-app.use(express.static(__dirname));
+app.use(express.static(path.join(__dirname, "public")));
 
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "index.html"));
+  res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
 const PORT = process.env.PORT || 3000;
+const PRICE = 350;
 
 if (!process.env.DATABASE_URL) {
   console.error("DATABASE_URL is required. Create/connect a PostgreSQL database in Render and add its connection string to this service.");
@@ -81,13 +82,6 @@ async function initDb() {
 
     CREATE INDEX IF NOT EXISTS inventory_available_idx ON inventory(status);
     CREATE INDEX IF NOT EXISTS orders_status_idx ON orders(status);
-
-    CREATE TABLE IF NOT EXISTS settings (
-      key TEXT PRIMARY KEY,
-      value TEXT NOT NULL
-    );
-    INSERT INTO settings (key, value) VALUES ('price', '350')
-      ON CONFLICT (key) DO NOTHING;
   `);
   console.log("Database ready");
 }
@@ -99,12 +93,6 @@ function adminAuth(req, res, next) {
   next();
 }
 
-async function getPrice() {
-  const { rows } = await pool.query("SELECT value FROM settings WHERE key='price'");
-  const price = Number(rows[0]?.value);
-  return Number.isInteger(price) && price > 0 ? price : 350;
-}
-
 app.get("/api/health/db", async (req, res) => {
   try {
     await pool.query("SELECT 1");
@@ -112,15 +100,6 @@ app.get("/api/health/db", async (req, res) => {
   } catch (e) {
     console.error(e);
     res.status(503).json({ ok: false, database: "unavailable" });
-  }
-});
-
-app.get("/api/price", async (req, res) => {
-  try {
-    res.json({ price: await getPrice() });
-  } catch (e) {
-    console.error(e);
-    res.status(500).json({ error: "Unable to load price" });
   }
 });
 
@@ -141,13 +120,12 @@ app.post("/api/create-order", async (req, res) => {
       });
     }
 
-    const price = await getPrice();
     const orderId = id();
     await pool.query(
       `INSERT INTO orders (order_id, quantity, amount, status) VALUES ($1,$2,$3,'PENDING')`,
-      [orderId, quantity, quantity * price]
+      [orderId, quantity, quantity * PRICE]
     );
-    res.json({ orderId, amount: quantity * price, price });
+    res.json({ orderId, amount: quantity * PRICE });
   } catch (e) {
     console.error(e);
     res.status(500).json({ error: "Unable to create order" });
@@ -222,33 +200,6 @@ app.post("/api/submit-utr", async (req, res) => {
   } catch (e) {
     console.error(e);
     res.status(500).json({ error: "Unable to submit UTR" });
-  }
-});
-
-app.get("/api/admin/price", adminAuth, async (req, res) => {
-  try {
-    res.json({ price: await getPrice() });
-  } catch (e) {
-    console.error(e);
-    res.status(500).json({ error: "Unable to load price" });
-  }
-});
-
-app.post("/api/admin/price", adminAuth, async (req, res) => {
-  try {
-    const price = Number(req.body.price);
-    if (!Number.isInteger(price) || price < 1 || price > 100000) {
-      return res.status(400).json({ error: "Price must be an integer between ₹1 and ₹100000" });
-    }
-    await pool.query(
-      `INSERT INTO settings (key, value) VALUES ('price', $1)
-       ON CONFLICT (key) DO UPDATE SET value=EXCLUDED.value`,
-      [String(price)]
-    );
-    res.json({ ok: true, price, message: `Price updated to ₹${price} per ID` });
-  } catch (e) {
-    console.error(e);
-    res.status(500).json({ error: "Unable to update price" });
   }
 });
 

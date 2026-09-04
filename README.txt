@@ -28,7 +28,3 @@ IMPORTANT
 - Keep CREDENTIAL_ENCRYPTION_KEY permanently. If it is changed later, old encrypted passwords cannot be decrypted.
 - Render Free Postgres is suitable for testing but currently expires after 30 days. Upgrade the database for long-term production storage.
 - The existing in-memory data from older deployments cannot be automatically recovered; add your IDs again to the new database.
-
-
-RATE CONTROL:
-Admin panel now has an ID Price section. Enter a custom integer price or use ₹300/₹350/₹400, then Save Rate. New orders use the current saved rate; existing orders keep their original amount.
