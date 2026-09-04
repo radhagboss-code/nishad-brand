@@ -21,14 +21,14 @@
   <h2>🛒 Select Number of IDs:</h2>
   <div class="plans" id="plans"></div>
 
-  <button class="buy" id="buyBtn">⚡ Buy Now — ₹350 (1 @ ₹350) →</button>
+  <button class="buy" id="buyBtn">⚡ Buy Now →</button>
   <p class="note">Payment is verified on the server. An ID is released only after verified payment.</p>
 </main>
 
 <a class="wa" href="https://wa.me/" target="_blank" rel="noopener">◔</a>
 
 <script>
-const price = 350;
+let price = 350;
 const choices = [1,2,5,10,20,30];
 let qty = 1;
 const plans = document.getElementById("plans");
@@ -51,6 +51,13 @@ function updateBuy(){
   document.getElementById("buyBtn").textContent =
     `⚡ Buy Now — ₹${qty*price} (${qty} @ ₹${price}) →`;
 }
+async function loadPrice(){
+  try{
+    const r=await fetch("/api/price");
+    const d=await r.json();
+    if(r.ok && Number.isInteger(d.price) && d.price>0){ price=d.price; render(); updateBuy(); }
+  }catch(e){}
+}
 document.getElementById("buyBtn").onclick=async()=>{
   const btn=document.getElementById("buyBtn");
   btn.disabled=true; btn.textContent="Creating order…";
@@ -65,7 +72,9 @@ document.getElementById("buyBtn").onclick=async()=>{
   }catch(e){ alert(e.message); btn.disabled=false; updateBuy(); }
 };
 async function loadStock(){ try{ const r=await fetch("/api/stock"); const d=await r.json(); document.getElementById("stock").textContent=d.available; }catch(e){} }
-render(); updateBuy(); loadStock(); setInterval(loadStock,10000);
+render(); updateBuy(); loadPrice(); loadStock();
+setInterval(loadStock,10000);
+setInterval(loadPrice,10000);
 </script>
 </body>
 </html>
